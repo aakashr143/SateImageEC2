@@ -82,13 +82,13 @@ def get_prediction(image_tensor):
 
 @app.route('/')
 def hello():
-    return 'SateImageClassification'
+    return jsonify({'message': 'SateImageClassification'})
 
 
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
-        data = request.json
+        data = json.loads(request.data)
 
         if not data['image_url']:
             return jsonify({
@@ -107,13 +107,15 @@ def predict():
         image_tensor = get_image_tensor(image_path)
         pred_idx, probs = get_prediction(image_tensor)
 
-        return jsonify({
+        response = jsonify({
             'error': False,
             'message': {
                 'class': classes[pred_idx],
                 'probablitiy': probs
             }
         })
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
 
     except Exception as e:
         return jsonify({
