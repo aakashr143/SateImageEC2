@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as f
 from flask import Flask, jsonify, request
 from torchvision import transforms
 from PIL import Image
@@ -72,8 +73,11 @@ def get_image_tensor(image_path):
 
 
 def get_prediction(image_tensor):
-    pred = model(image_tensor).argmax(dim=1).item()
-    return pred
+    with torch.no_grad():
+        predictions = model(image_tensor)
+        probabilites = f.softmax(predictions, dim=1)
+
+        return predictions.argmax(dim=1).item(), [t.item() for t in probabilites[0]]
 
 
 @app.route('/')
@@ -101,11 +105,14 @@ def predict():
             })
 
         image_tensor = get_image_tensor(image_path)
-        pred = get_prediction(image_tensor)
+        pred_idx, probs = get_prediction(image_tensor)
 
         return jsonify({
             'error': False,
-            'message': classes[pred]
+            'message': {
+                'class': classes[pred_idx],
+                'probablitiy': probs
+            }
         })
 
     except Exception as e:
