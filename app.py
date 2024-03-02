@@ -8,6 +8,7 @@ import os
 
 app = Flask(__name__)
 model = torch.load('model.pth')
+model.eval()
 
 classes = [
     "Agricultural",
